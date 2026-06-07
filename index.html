@@ -91,6 +91,55 @@
   }
   .inline-progress.visible { opacity: 1; }
 
+  .inline-timecode {
+    position: absolute;
+    bottom: 60px;
+    right: 32px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.55);
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .inline-timecode.visible { opacity: 1; }
+
+  .inline-close-btn {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    z-index: 20;
+    pointer-events: none;
+  }
+  .inline-close-btn.visible { opacity: 0.6; pointer-events: all; }
+  .inline-close-btn:hover { opacity: 1 !important; }
+  .inline-close-btn-x {
+    font-size: 36px;
+    font-weight: 200;
+    line-height: 1;
+    color: #fff;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+  .inline-close-btn-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
   .inline-tooltip {
     position: absolute;
     bottom: 100px;
@@ -244,7 +293,18 @@
     align-items: center;
     padding: 0 32px;
     height: var(--nav-h);
+    transition: opacity 0.8s ease;
   }
+  nav.hidden { opacity: 0; pointer-events: none; }
+
+  #arrowLeft, #arrowRight { transition: opacity 0.8s ease; }
+  body.inline-playing #arrowLeft,
+  body.inline-playing #arrowRight { opacity: 0 !important; pointer-events: none !important; }
+
+  .inline-info-btn { transition: opacity 0.8s ease; }
+  body.inline-playing .inline-info-btn { opacity: 0; pointer-events: none; }
+
+  .bottom-bar { transition: opacity 0.8s ease; }
 
   .nav-brand {
     font-size: 42px;
@@ -3127,6 +3187,18 @@
     muteBtn.textContent = '⏸ Pause';
     slide.appendChild(muteBtn);
 
+    // Add timecode display
+    const timecode = document.createElement('div');
+    timecode.className = 'inline-timecode';
+    slide.appendChild(timecode);
+
+    // Add close button
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'inline-close-btn';
+    closeBtn.innerHTML = '<span class="inline-close-btn-x">&#x2715;</span><span class="inline-close-btn-label">Close</span>';
+    slide.appendChild(closeBtn);
+    closeBtn.addEventListener('click', resetPlayback);
+
     function startPlayback(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
       vid.muted = false;
@@ -3140,7 +3212,13 @@
       muteBtn.style.display = 'block';
       titleWrap.style.transition = 'opacity 0.6s';
       titleWrap.style.opacity = '0';
+      document.querySelector('nav').classList.add('hidden');
+      document.body.classList.add('inline-playing');
+      const bottomBar = slide.querySelector('.bottom-bar');
+      if (bottomBar) bottomBar.style.opacity = '0';
       progress.classList.add('visible');
+      timecode.classList.add('visible');
+      closeBtn.classList.add('visible');
       updateProgress();
     }
 
@@ -3152,14 +3230,27 @@
       muteBtn.style.display = 'none';
       titleWrap.style.transition = 'opacity 0.6s';
       titleWrap.style.opacity = '1';
+      document.querySelector('nav').classList.remove('hidden');
+      document.body.classList.remove('inline-playing');
+      const bottomBar = slide.querySelector('.bottom-bar');
+      if (bottomBar) bottomBar.style.opacity = '1';
       progress.classList.remove('visible');
+      timecode.classList.remove('visible');
+      closeBtn.classList.remove('visible');
       progressBar.style.width = '0%';
       cancelAnimationFrame(rafId);
+    }
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
     }
 
     function updateProgress() {
       if (vid.duration) {
         progressBar.style.width = (vid.currentTime / vid.duration * 100) + '%';
+        timecode.textContent = formatTime(vid.currentTime) + ' / ' + formatTime(vid.duration);
       }
       rafId = requestAnimationFrame(updateProgress);
     }
