@@ -1793,6 +1793,25 @@
 
     :root { --nav-h: 80px; }
 
+    /* Landing page cycling videos — letterbox on portrait rather than extreme crop */
+    .cycle-video {
+      width: 100%;
+      height: auto;
+      min-width: 0;
+      min-height: 0;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Same fix for campaign slide background videos */
+    .video-bg video {
+      width: 100%;
+      height: auto;
+      min-width: 0;
+      min-height: 0;
+    }
+
     /* Nav */
     nav {
       padding: 0 20px;
